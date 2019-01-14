@@ -7,7 +7,12 @@
 ;; **
 ;;; # Machine learning dataflow example
 ;;; 
-;;; The purpose of this short worksheet is to reason about a simple machine learning dataflow, and discuss which tools may be useful to conduct such dataflows efficiently.
+;;; The purpose of this notebook is twofold:
+;;; - to present an oversimplified machine learning dataflow
+;;; - to discuss which tools may be useful to conduct such dataflows efficiently -- and in particular, to memoize their intermediate results.
+;;; 
+;;; Changes log:
+;;; - 2019-01-15 - 1st draft
 ;; **
 
 ;; @@
@@ -43,6 +48,8 @@
 ;; <=
 
 ;; **
+;;; ## Example dataflow
+;;; 
 ;;; Let us consider a typical dataflow that may occur in a machine learning experiment. Note that this is almost the bare minimum -- we do not even do cross-validation here.
 ;;; 
 ;;; We take the raw data corresponding to a certain year; clean it; split it to training and testing; extract the `x` parts (the features) and the `y` parts (the response); compute some statistics on the training data; normalize both training and testing data using these statistics; train a model on the normalized training data; compute its predictions for the normalized test data; compute the error of prediction; and extract some performance measures from the error.
@@ -75,7 +82,9 @@
 ;; <=
 
 ;; **
-;;; Let us analyse this expression, to figure out the dependencies across data objects:
+;;; ## The graph of dependencies 
+;;; 
+;;; Let us analyse this expression, to figure out the dependencies across data objects along the process:
 ;; **
 
 ;; @@
@@ -141,6 +150,8 @@
 ;; <=
 
 ;; **
+;;; ## Varying parameters
+;;; 
 ;;; Some nodes in this DAG are external -- that is, do not appear as outputs in the process, but only as inputs. These are external parameters such as `year`, `train-test-ratio`, etc.
 ;;; 
 ;;; Now, typically, one may want to run the dataflow many times, for different values of the external paramets (e.g., different `mode-type`s). This has several motivations:
@@ -150,19 +161,35 @@
 ;;; 
 ;;; Of course, in these many runs with varying combinations of external parameters, some nodes will have repeating values. For example, `normalized-test-data-x` does not depend on `model-params`, and will thus repeat itself in many runs with varying `model-params`.
 ;;; 
-;;; So, to be efficient, we would rather memoize such values. Ideally, memoization will be both in-memory, on-disk and across machines, to support different modes of operation.
+;;; ## Memoization
+;;; 
+;;; So, to be efficient, we would rather memoize such repeating values. Ideally, memoization will be both in-memory, on-disk and across machines, to support different modes of operation.
 ;;; 
 ;;; Actually, by memoizing intermediate results, we would achieve not only efficiency of computation. It would provide us with a catalogue of our past computations, that can later be analysed in many ways.
+;;; 
+;;; ## Existing tools
 ;;; 
 ;;; Libraries and tools that help to automate and organize such processes are ususally called "workflow managers", "pipeline frameworks", etc. See, for example, [this list](https://github.com/pditommaso/awesome-pipeline). 
 ;;; 
 ;;; There are many choices and frameworks in defining such tools. For example, [Luigi](https://github.com/spotify/luigi) and [Sciluigi](https://github.com/pharmbio/sciluigi) offer rather flexible, yet well-organized strucutres, and provide some basic monitoring tools, but they rely on the filesystem to communicate data between computation steps, and require some object-oriented biolerplate to make things work. The [Drake R package](https://github.com/ropensci/drake) offers very short syntax by making some details transparent, but seems to be less flexibile.
 ;;; 
-;;; Personally, my best experience in organizing such dataflows was with a tiny library built with Clojure several years ago, in one of my workplaces back then. It used Plumatic's [Plumbing](https://github.com/plumatic/plumbing) to represent the parameter flow, and its own data structures to represetnt the computation graph. An SQL database was used as a catalogue of past computations. Many nested maps and vectors were used in that library -- it was a festival of immutatbile data strucutres. That was fun, but resulted in a lot of garbage collection, hash-collisions and slow hash computations. These could be solved, and it was an important lesson for me. It was the first killer app that made Clojure very relevant to my work, and was important enough to convince my colleagues to try it. All that was never open-sourced. I would love to create something similar.
+;;; ## Some experience
+;;; 
+;;; Personally, my best experience in organizing such dataflows was with a tiny library built with Clojure several years ago, in one of my workplaces back then.
+;;; 
+;;; It used Plumatic's [Plumbing](https://github.com/plumatic/plumbing) to represent the parameter flow, and its own data structures to represetnt the computation graph. An SQL database was used as a catalogue of past computations.
+;;; 
+;;; Many nested maps and vectors were used in that library -- it was a festival of immutatbile data strucutres. That was fun, but resulted in a lot of garbage collection, hash-collisions and slow hash computations. These could be solved, and it was an important lesson for me.
+;;; 
+;;; It was the first killer app that made Clojure very relevant to my work, and was important enough to convince my colleagues to try it. All that was never open-sourced. I would love to create something similar.
+;;; 
+;;; ## Identifyng objects along the process
 ;;; 
 ;;; To memoize data objects in the computation, we need some way to identify them uniquely, such that identifiers may serve as keys in a key->value mapping. For example, in the dataflow above, `train-data` depends on `[outlier-threshold, year, randomness-seed, train-test-ratio]`, so a combination of their values, say `[0.9, 2011, 1, 0.3]`, may serve as the identifier of a specific realization of `train-data`. One may also decide to add the git hash of the code, to make things more accurately reproducible, and avoid mistakenly mixing different versions of the code in one run.
 ;;; 
-;;; Sciluigi uses a different approach -- the identifier of a data object is its filename. The user is responsible to specify filenames in a way that would reflect their dependency on other objects. This is not so bad actually, and allows for some flexibility and clarity in organizing the results. But it is coupled with Sciluigi's file-based approach, and also results with some repeating boilerplate, which could be avoided transparently.
+;;; (Sciluigi uses a different approach -- the identifier of a data object is its filename. The user is responsible to specify filenames in a way that would reflect their dependency on other objects. This is not so bad actually, and allows for some flexibility and clarity in organizing the results. But it is coupled with Sciluigi's file-based approach, and also results with some repeating boilerplate, which could be avoided transparently.)
+;;; 
+;;; ## How to continue?
 ;;; 
 ;;; It seems that we can create a new solution in this field, that would be flexible, lightweight and fun to use. Let us discuss this further.
 ;; **
