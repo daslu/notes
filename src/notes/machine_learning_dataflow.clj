@@ -189,6 +189,12 @@
 ;;; 
 ;;; (Sciluigi uses a different approach -- the identifier of a data object is its filename. The user is responsible to specify filenames in a way that would reflect their dependency on other objects. This is not so bad actually, and allows for some flexibility and clarity in organizing the results. But it is coupled with Sciluigi's file-based approach, and also results with some repeating boilerplate, which could be avoided transparently.)
 ;;; 
+;;; Even if we accept the principle that a data object is identified by the paramers it depends upon, there remain some questions as to the management of these identifiers. What metadata should be attach to every object in order to keep track of these data? Is the object aware of all objects and functions that took part in the history of its creation? Etc.
+;;; 
+;;; ## Data slices
+;;; 
+;;; Sometimes, it may be wasteful to keep copies of all intermediate data objects in the process. For example, the train and test datasets are slices of the same dataset. Also, on cross-validation processes such as leave-one-out, many almost-identical slices are created. How can our concept of memoization be augmented to avoid being wasteful in these situations?
+;;; 
 ;;; ## How to continue?
 ;;; 
 ;;; It seems that we can create a new solution in this field, that would be flexible, lightweight and fun to use. Let us discuss this further.
