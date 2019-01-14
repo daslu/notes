@@ -173,6 +173,8 @@
 ;;; 
 ;;; There are many choices and frameworks in defining such tools. For example, [Luigi](https://github.com/spotify/luigi) and [Sciluigi](https://github.com/pharmbio/sciluigi) offer rather flexible, yet well-organized strucutres, and provide some basic monitoring tools, but they rely on the filesystem to communicate data between computation steps, and require some object-oriented biolerplate to make things work. The [Drake R package](https://github.com/ropensci/drake) offers very short syntax by making some details transparent, but seems to be less flexibile.
 ;;; 
+;;; Of course, it is interesting to note the similarity between this field to the field of build tools. The dilemmas and tradeoffs of composability vs declerativity (e.g. Boot vs Leiningen) appear here, too.
+;;; 
 ;;; ## Some experience
 ;;; 
 ;;; Personally, my best experience in organizing such dataflows was with a tiny library built with Clojure several years ago, in one of my workplaces back then.
