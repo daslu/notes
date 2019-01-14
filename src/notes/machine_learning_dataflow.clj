@@ -183,7 +183,7 @@
 ;;; 
 ;;; It was the first killer app that made Clojure very relevant to my work, and was important enough to convince my colleagues to try it. All that was never open-sourced. I would love to create something similar.
 ;;; 
-;;; ## Identifyng objects along the process
+;;; ## Identifying objects along the process
 ;;; 
 ;;; To memoize data objects in the computation, we need some way to identify them uniquely, such that identifiers may serve as keys in a key->value mapping. For example, in the dataflow above, `train-data` depends on `[outlier-threshold, year, randomness-seed, train-test-ratio]`, so a combination of their values, say `[0.9, 2011, 1, 0.3]`, may serve as the identifier of a specific realization of `train-data`. One may also decide to add the git hash of the code, to make things more accurately reproducible, and avoid mistakenly mixing different versions of the code in one run.
 ;;; 
